@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+datafiles/*
+staticfiles/*
+gen-lang-client-*.json

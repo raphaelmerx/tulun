@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3
+      - ./staticfiles:/app/staticfiles
+    env_file:
+      - prod.env
+    ports:
+      - "8008:8008"
+    restart: unless-stopped

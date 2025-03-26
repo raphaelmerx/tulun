@@ -1,0 +1,240 @@
+{% load config_tags %}
+
+{% get_config as config %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{config.site_title}}</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    {% comment %} Customize at https://v5.daisyui.com/docs/cdn/ {% endcomment %}
+    <link href="https://cdn.jsdelivr.net/combine/npm/daisyui@beta/base/properties.css,npm/daisyui@beta/base/reset.css,npm/daisyui@beta/base/rootcolor.css,npm/daisyui@beta/base/rootscrollgutter.css,npm/daisyui@beta/base/rootscrolllock.css,npm/daisyui@beta/base/scrollbar.css,npm/daisyui@beta/base/svg.css,npm/daisyui@beta/components/button.css,npm/daisyui@beta/components/checkbox.css,npm/daisyui@beta/components/input.css,npm/daisyui@beta/components/menu.css,npm/daisyui@beta/components/modal.css,npm/daisyui@beta/components/tooltip.css,npm/daisyui@beta/components/loading.css,npm/daisyui@beta/components/select.css,npm/daisyui@beta/components/toggle.css,npm/daisyui@beta/theme/light.css,npm/daisyui@5/components/alert.css" rel="stylesheet" type="text/css" />
+    <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-2 flex justify-end">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="text-gray-600 hover:text-gray-900 cursor-pointer">
+                    <i class="las la-sign-out-alt"></i> Logout
+                </button>
+            </form>
+        </div>
+    </nav>
+    {% include "translations/add_modal.html" %}
+    <div class="container mx-auto p-4 space-y-6">
+        <h1 class="text-3xl font-bold text-center mb-6">{{config.site_title}}</h1>
+
+        <form id="translateForm" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label for="source_text" class="block text-sm font-medium">English Text</label>
+                    <div class="relative">
+                        <textarea 
+                            id="source_text" 
+                            name="source_text" 
+                            class="w-full h-42 p-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="{{config.placeholder}}"
+                            maxlength="1000"
+                        ></textarea>
+                        {% include "translations/eval_browser.html" %}
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium">{{config.target_language_name}} Translation</label>
+                    <div class="flex flex-col space-y-2">
+                        <div class="relative">
+                            <div
+                                id="mt-translation"
+                                class="w-full min-h-16 h-fit pt-3 px-2 pb-2 border border-dashed rounded-md bg-gray-50 text-sm text-gray-600"
+                            ></div>
+                            <div class="absolute -top-1 right-2">
+                                <span class="text-xs text-gray-400 bg-white px-1">MT Version</span>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <div
+                                id="final-translation" 
+                                class="w-full min-h-24 h-fit pt-3 px-2 pb-2 border rounded-md bg-gray-50"
+                            ></div>
+                            <div class="absolute -top-1 right-2">
+                                <span class="text-xs text-gray-700 bg-white px-1">AI-edited version</span>
+                            </div>
+                            {% if perms.translations.change_corpusentry %}
+                            <div class="absolute bottom-2 right-2">
+                                <div class="tooltip" data-tip="Edit & add to translation memory">
+                                    <i class="las la-pen text-xl cursor-pointer hover:text-blue-600" onclick="translation_modal.showModal()"></i>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button 
+                    type="submit"
+                    id="translate-button"
+                    class="btn btn-primary"
+                >
+                    Translate
+                </button>
+            </div>
+        </form>
+
+        <div id="results" style="display: none" class="grid md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="border-b pb-4 mb-4">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        Glossary
+                        {% if perms.translations.change_glossaryentry %}
+                        <div class="tooltip" data-tip="Edit glossary entries">
+                            <a href="/admin/translations/glossaryentry/" target="_blank" class="hover:text-blue-600">
+                                <i class="las la-pen text-sm border border-gray-400 p-1 rounded"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </h2>
+                    <p class="text-sm text-gray-600">Entries retrieved that are relevant to this translation</p>
+                </div>
+                <ul id="glossary-entries" class="space-y-2"></ul>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="border-b pb-4 mb-4">
+                    <h2 class="text-xl font-semibold">
+                        Translation memories
+                        {% if perms.translations.change_corpusentry %}
+                        <div class="tooltip" data-tip="Edit translation memory">
+                            <a href="/admin/translations/corpusentry/" target="_blank" class="hover:text-blue-600">
+                                <i class="las la-pen text-sm border border-gray-400 p-1 rounded"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </h2>
+                    <p class="text-sm text-gray-600">Past translations that are relevant to this translation</p>
+                </div>
+                <ul id="similar-sentences" class="space-y-3"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatMarkdown(text) {
+            return text
+                // Bold: **text** or __text__
+                .replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>')
+                // Italic: *text* or _text_
+                .replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+        }
+        function addCorrections(corrections) {
+            // for each correction, get the 'mt' key, and change the text in #mt-translation to have a span with class 'bg-pink-400 bg-opacity-20 border-b-2 border-mtc_pink-300' around that word
+            const mtText = document.getElementById('mt-translation').textContent;
+            let newMtText = mtText;
+            const finalText = document.getElementById('final-translation').textContent;
+            let newFinalText = finalText;
+            corrections.forEach(correction => {
+                const mt = correction.from;
+                const newMt = `<span class="bg-pink-100 bg-opacity-20 border-b-2 border-mtc_pink-300">${mt}</span>`;
+                newMtText = newMtText.replace(mt, newMt);
+
+                const finalCorrection = correction.to;
+                const newFinal = `<span class="bg-green-100 bg-opacity-20 border-b-2 border-mtc_green-300">${finalCorrection}</span>`;
+                newFinalText = newFinalText.replace(finalCorrection, newFinal);
+            });
+            document.getElementById('mt-translation').innerHTML = newMtText;
+            document.getElementById('final-translation').innerHTML = newFinalText;
+        }
+        document.getElementById('translateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous results
+            document.getElementById('mt-translation').textContent = '';
+            document.getElementById('final-translation').textContent = '';
+            document.getElementById('glossary-entries').innerHTML = '';
+            document.getElementById('similar-sentences').innerHTML = '';
+            
+            // Show results section
+            document.getElementById('results').style.display = 'grid';
+            // add a spinner to translate-button
+            document.getElementById('translate-button').classList.add('loading', 'loading-dots', 'loading-xs');
+
+            const formData = new FormData(this);
+            let sourceText = formData.get('source_text');
+            // if sourceText is empty, use {{config.placeholder}}
+            if (sourceText.trim() === '') {
+                sourceText = document.getElementById('source_text').placeholder;
+                document.getElementById('source_text').value = sourceText;
+            }
+
+            if (window.translationEventSource) {
+                window.translationEventSource.close();
+            }
+
+            const eventSource = new EventSource(`/translate/?source_text=${encodeURIComponent(sourceText)}`);
+            window.translationEventSource = eventSource;
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                switch(data.type) {
+                    case 'mt_translation':
+                        document.getElementById('mt-translation').textContent = data.data;
+                        break;
+                    case 'glossary_entries':
+                        const glossaryList = document.getElementById('glossary-entries');
+                        data.data.forEach(entry => {
+                            const li = document.createElement('li');
+                            let value = formatMarkdown(entry.tgt);
+                            value = value.replace(/;/g, ' ; '); // Make it more readable
+                            li.className = 'flex justify-between';
+                            li.innerHTML = `
+                                <span class="text-gray-700">${entry.en}</span>
+                                <span class="font-semibold">${value}</span>
+                            `;
+                            glossaryList.appendChild(li);
+                        });
+                        break;
+                    case 'similar_sentences':
+                        const similarList = document.getElementById('similar-sentences');
+                        data.data.forEach(sentence => {
+                            const li = document.createElement('li');
+                            li.className = 'border-b pb-2 last:border-b-0';
+                            li.innerHTML = `
+                                <p class="text-sm text-muted-foreground">${sentence.en}</p>
+                                <p class="font-medium">${sentence.tgt}</p>
+                            `;
+                            similarList.appendChild(li);
+                        });
+                        break;
+                    case 'final_translation':
+                        document.getElementById('final-translation').textContent = data.data;
+                        document.getElementById('modal-english-text').value = sourceText;
+                        document.getElementById('modal-tgt-translation').value = data.data.trim();
+                        // remove spinner from translate-button
+                        document.getElementById('translate-button').classList.remove('loading', 'loading-dots', 'loading-xs');
+                        break;
+                    case 'corrections':
+                        addCorrections(data.data);
+                        eventSource.close();
+                        break;
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('EventSource failed:', error);
+                eventSource.close();
+                // remove spinner from translate-button
+                document.getElementById('translate-button').classList.remove('loading', 'loading-dots', 'loading-xs');
+            };
+        });
+    </script>
+</body>
+</html>

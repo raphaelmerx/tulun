@@ -1,0 +1,52 @@
+{% load config_tags %}
+
+{% get_config as config %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - {{config.site_title}}</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    {% comment %} Customize at https://v5.daisyui.com/docs/cdn/ {% endcomment %}
+    <link href="https://cdn.jsdelivr.net/combine/npm/daisyui@beta/base/properties.css,npm/daisyui@beta/base/reset.css,npm/daisyui@beta/base/rootcolor.css,npm/daisyui@beta/base/rootscrollgutter.css,npm/daisyui@beta/base/rootscrolllock.css,npm/daisyui@beta/base/scrollbar.css,npm/daisyui@beta/base/svg.css,npm/daisyui@beta/components/button.css,npm/daisyui@beta/components/checkbox.css,npm/daisyui@beta/components/input.css,npm/daisyui@beta/components/menu.css,npm/daisyui@beta/components/modal.css,npm/daisyui@beta/components/tooltip.css,npm/daisyui@beta/components/loading.css,npm/daisyui@beta/components/select.css,npm/daisyui@beta/components/toggle.css,npm/daisyui@beta/theme/light.css" rel="stylesheet" type="text/css" />
+    <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="card w-full max-w-md bg-base-100 shadow-xl">
+        <div class="card-header space-y-1 p-4">
+            <h1 class="text-2xl font-bold text-center">Sign in to your account</h1>
+            <p class="text-center text-gray-600">{{config.site_title}}</p>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-error mb-4">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="space-y-4">
+                    {% for field in form %}
+                    <div class="flex flex-col gap-1">
+                        <label class="text-sm font-medium">
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <p class="text-sm text-red-500">
+                            {{ field.errors|join:", " }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary w-full">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

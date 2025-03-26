@@ -1,0 +1,104 @@
+
+<div role="alert" class="alert alert-success alert-soft bottom-4 left-1/2 -translate-x-1/2 z-50" id="success-message" style="display: none;"
+  <span>Added to the Translation Memory!</span>
+</div>
+<dialog id="translation_modal" class="modal">
+  <div class="modal-box w-11/12 max-w-[800px]">
+    <!-- Header -->
+    <h3 class="font-bold text-lg">Add as translation memory</h3>
+    <p class="py-2 text-sm text-gray-600">Save this translation for future use in AI post-editing.</p>
+
+    <!-- Content -->
+    <div class="py-4 space-y-4">
+      <!-- English Text Area -->
+      <div class="space-y-2">
+        <label for="english-text" class="text-sm font-medium">English Text</label>
+        <textarea
+          id="modal-english-text"
+          placeholder="Enter English text here..."
+          class="textarea textarea-bordered w-full h-32 p-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        ></textarea>
+      </div>
+
+      <div class="space-y-2">
+        <label for="modal-tgt-translation" class="text-sm font-medium">Translation</label>
+        <textarea
+          id="modal-tgt-translation"
+          placeholder="Enter translation here..."
+          class="textarea textarea-bordered w-full h-32 p-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-action">
+      <form method="dialog" class="space-x-2">
+        <button class="btn btn-ghost" type="button" onclick="translation_modal.close()">Cancel</button>
+        <button class="btn btn-primary" type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.querySelector('.modal-action form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.classList.add('loading', 'loading-dots', 'loading-xs');
+      
+      const englishText = document.getElementById('modal-english-text').value;
+      const tgtTranslation = document.getElementById('modal-tgt-translation').value;
+
+      // Get CSRF token from cookie
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      try {
+        const response = await fetch('/api/corpus-entry/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: new URLSearchParams({
+            'src': englishText,
+            'translation': tgtTranslation
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        document.getElementById('final-translation').textContent = tgtTranslation;
+        translation_modal.close();
+
+        // success message: show for 5 secs
+        successMessage = document.getElementById('success-message');
+
+        // remove the style attribute to show the message
+        successMessage.removeAttribute('style');
+        successMessage.classList.add('fixed');
+        setTimeout(() => {
+          successMessage.style.display = 'none';
+          successMessage.classList.remove('fixed');
+        }, 5000);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        submitBtn.classList.remove('loading', 'loading-dots', 'loading-xs');
+      }
+    });
+  </script>
+</dialog>

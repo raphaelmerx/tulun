@@ -1,0 +1,73 @@
+<div id="navigation-buttons" class="absolute bottom-2 right-2 hidden">
+    <div class="tooltip" data-tip="Previous test translation">
+        <i class="las la-angle-left text-xl cursor-pointer hover:text-blue-600" onclick="navigateEval('prev')"></i>
+    </div>
+    <div class="tooltip" data-tip="Next test translation">
+       <i class="las la-angle-right text-xl cursor-pointer hover:text-blue-600" onclick="navigateEval('next')"></i>
+    </div>
+  </div>
+
+{{ eval_rows | json_script:"eval-rows-data" }}
+<script>
+    const evalSet = JSON.parse(document.getElementById('eval-rows-data').textContent);
+  
+    let currentIndex = -1;
+    const textarea = document.getElementById('source_text');
+    const navigationButtons = document.getElementById('navigation-buttons');
+  
+    // Check if entered text is in eval set
+    textarea.addEventListener('input', function() {
+      const enteredText = textarea.value.trim();
+      currentIndex = evalSet.findIndex(sentence => sentence.en.trim() === enteredText);
+      // clear the #rererence-translation element
+      const referenceTranslation = document.getElementById('reference-translation');
+      if (referenceTranslation) {
+        referenceTranslation.remove();
+      }
+      
+      if (currentIndex !== -1) {
+        navigationButtons.classList.remove('hidden');
+        document.getElementById('translate-button').click();
+      } else {
+        navigationButtons.classList.add('hidden');
+      }
+    });
+  
+    // Navigation function
+    function navigateEval(direction) {
+      if (currentIndex === -1) return;
+  
+      if (direction === 'next') {
+        currentIndex = (currentIndex + 1) % evalSet.length;
+      } else {
+        currentIndex = (currentIndex - 1 + evalSet.length) % evalSet.length;
+      }
+  
+      textarea.value = evalSet[currentIndex].en;
+      document.getElementById('translate-button').click();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // listen to clicks on #translate-button
+      document.getElementById('translate-button').addEventListener('click', function() {
+        // if a #reference-translation element exists, remove it
+        const referenceTranslation = document.getElementById('reference-translation');
+        if (referenceTranslation) {
+          referenceTranslation.remove();
+        }
+        // get the current value of the text
+        const enteredText = textarea.value.trim();
+
+        currentIndex = evalSet.findIndex(sentence => sentence.en === enteredText);
+        if (currentIndex !== -1) {
+          const tetunText = evalSet[currentIndex].tgt;
+          // get element #final-translation, insert a sibling element with the tetunText
+          const finalTranslation = document.getElementById('final-translation');
+          const tetunElement = document.createElement('div');
+          tetunElement.id = 'reference-translation';
+          tetunElement.innerHTML = '<span class="bg-white font-bold">REF: </span>' + tetunText;
+          finalTranslation.insertAdjacentElement('afterend', tetunElement);
+        }
+      });
+    });
+  </script>
