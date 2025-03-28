@@ -43,3 +43,9 @@ docker-compose up -d
 ```
 
 Access your server at http://localhost:8008/. Can be deployed behind a reverse proxy like Nginx.
+
+## Evaluation
+
+For evaluations in the paper: see the [eval](./eval/) folder README.
+
+For the in-app eval mode, upload your evaluation set at `/admin/translations/evalrow/`. Upon entering a sentence that is part of the eval set, the app will automatically switch to eval mode.

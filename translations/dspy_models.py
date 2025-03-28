@@ -11,7 +11,7 @@ import dspy
 
 from .models import GlossaryEntry, SystemConfiguration, CorpusEntry
 
-lm = dspy.LM('gemini/gemini-2.0-flash', api_key=os.getenv('GOOGLE_API_KEY'))
+lm = dspy.LM('gemini/gemini-2.0-flash', api_key=os.getenv('GEMINI_API_KEY'))
 dspy.configure(lm=lm)
 
 config = SystemConfiguration.load()
