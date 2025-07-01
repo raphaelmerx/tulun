@@ -5,7 +5,7 @@
 
 Transparent and Adaptable Low-resource Machine Translation, through LLM post-editing
 
-[🎥 Demo video](https://youtu.be/fQFwOxzR4MI) | [🖥️ Live demo (using Bislama)](https://bislama-trans.rapha.dev/)
+[🎥 Demo video](https://youtu.be/fQFwOxzR4MI) | [🖥️ Live demo (using Bislama)](https://bislama-trans.rapha.dev/) | [📄 Paper](https://arxiv.org/abs/2505.18683)
 
 ![Tulun Demo](./demo.gif)
 
